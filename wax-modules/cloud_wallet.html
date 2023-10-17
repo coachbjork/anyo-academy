@@ -1,0 +1,65 @@
+<!-- Example of how you can login and interact with the cloud wallet -->
+<script src="https://notify.waxsweden.org/static/assets/waxjs.js"></script>
+
+<strong>Login and get your WAX wallet trust score</strong>
+<br/>
+<button id="login" onclick="login()">WAX Login</button>
+<p style="color:#ef9d47" id="loginresponse"></p>
+<strong>Sign Transaction</strong>
+<p>Click once you're logged in. <br>It's just a 0.00000001 WAXP transfer, just decline it if you want.</p>
+<button id="sign" onclick="sign()">Sign Transaction</button>
+<pre><code id="response">Transaction Response
+</code></pre>
+
+<script>
+	
+    const wax = new waxjs.WaxJS({
+        rpcEndpoint: 'https://api.waxsweden.org'
+    });
+
+    async function login() {
+        try {
+            let userAccount = await wax.login();
+            let pubKeys = wax.pubKeys;
+            let trustScore = wax.trustScore;
+            let str = 'Account: ' + userAccount + '<br/>Wallet Trust Score: ' + trustScore
+
+            console.log(wax)
+            document.getElementById('loginresponse').insertAdjacentHTML('beforeend', str);
+        } catch (e) {
+            document.getElementById('loginresponse').append(e.message);
+        }
+    } 
+
+    async function sign() {
+    if(!wax.api) {
+        return document.getElementById('response').append('* Login first *');
+    }
+
+    try {
+        const result = await wax.api.transact({
+        actions: [{
+            account: 'eosio.token',
+            name: 'transfer',
+            authorization: [{
+            actor: wax.userAccount,
+            permission: 'active',
+            }],
+            data: {
+            from: wax.userAccount,
+            to: 'alienw',
+            quantity: '0.00000001 WAX',
+            memo: 'Just testing the wallet',
+            },
+        }]
+        }, {
+        blocksBehind: 3,
+        expireSeconds: 30
+        });
+        document.getElementById('response').append(JSON.stringify(result, null, 2))
+    } catch(e) {
+        document.getElementById('response').append(e.message);
+    }
+    }
+
+</script>
